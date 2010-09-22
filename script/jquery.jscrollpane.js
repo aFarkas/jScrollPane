@@ -188,6 +188,7 @@
 					removeFocusHandler();
 					removeKeyboardNav();
 					removeClickOnTrack();
+					removeTouch();
 					unhijackInternalLinks();
 				} else {
 					elem.addClass('jspScrollable');
@@ -209,6 +210,8 @@
 
 					initFocusHandler();
 					initMousewheel();
+					initTouch();
+					
 					if (settings.enableKeyboardNavigation) {
 						initKeyboardNav();
 					}
@@ -231,7 +234,7 @@
 						settings.autoReinitialiseDelay
 					);
 				} else if (!settings.autoReinitialise && reinitialiseInterval) {
-					clearInterval(reinitialiseInterval)
+					clearInterval(reinitialiseInterval);
 				}
 
 				elem.trigger('jsp-initialised', [isScrollableH || isScrollableV]);
@@ -796,7 +799,7 @@
 					mwEvent,
 					function (event, delta, deltaX, deltaY) {
 						var dX = horizontalDragPosition, dY = verticalDragPosition;
-						positionDragX(horizontalDragPosition + deltaX * settings.mouseWheelSpeed, false)
+						positionDragX(horizontalDragPosition + deltaX * settings.mouseWheelSpeed, false);
 						positionDragY(verticalDragPosition - deltaY * settings.mouseWheelSpeed, false);
 						// return true if there was no movement so rest of screen can scroll
 						return dX == horizontalDragPosition && dY == verticalDragPosition;
@@ -807,6 +810,52 @@
 			function removeMousewheel()
 			{
 				container.unbind(mwEvent);
+			}
+			
+			
+					
+			function initTouch()
+			{
+				removeTouch();
+				var pos = {
+					x: 0,
+					y: 0
+				};
+				
+				container
+					.bind(
+						'simpletouchstart.jsp',
+						function (event) {
+							pos.x = event.pageX;
+							pos.y = event.pageY;
+						}
+					)
+					.bind('simpletouchmove.jsp', function(event){
+						var dX = horizontalDragPosition, dY = verticalDragPosition, nY, nX;
+						if(verticalDrag && verticalDrag[0] === event.target){
+							nY = (pos.y - event.pageY) * - 1;
+						} else if(horizontalDrag && horizontalDrag[0] === event.target){
+							nX = (pos.x - event.pageX) * - 1;
+						} else {
+							nY = pos.y - event.pageY;
+							nX = pos.x - event.pageX;
+						}
+						if(nX !== undefined){
+							positionDragX(horizontalDragPosition + nX, false);
+						}
+						if(nY !== undefined){
+							positionDragY(verticalDragPosition + nY, false);
+						}
+						pos.x = event.pageX;
+						pos.y = event.pageY;
+						return dX == horizontalDragPosition && dY == verticalDragPosition;
+					})
+				;
+			}
+
+			function removeTouch()
+			{
+				container.unbind('simpletouchstart.jsp simpletouchend.jsp simpletouchmove.jsp');
 			}
 
 			function nil()
