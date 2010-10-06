@@ -890,7 +890,9 @@
 						'keydown.jsp',
 						function(e)
 						{
-							if(e.target !== elem[0]){
+							//handle keydown also inside the element
+							//but not if the user is interacting with form elements (except buttons)
+							if(e.target.form && !$.expr.filters.button(e.target)){
 								return;
 							}
 							var dX = horizontalDragPosition, dY = verticalDragPosition, step = pressed ? 2 : 16;
@@ -943,13 +945,24 @@
 						elem.attr('hideFocus', false);
 					}
 				}
+				//remove focus and focus outline, if the user seems to currently use a mouse
+				elem.bind('mousedown.jspPreventFocus', function(){
+					elem.bind('focus.jspPreventFocus', function(){
+						elem.blur();
+					});
+					setTimeout(function(){
+						elem.unbind('focus.jspPreventFocus');
+					}, 1);
+				});
 			}
 			
 			function removeKeyboardNav()
 			{
 				elem.attr('tabindex', '-1')
 					.removeAttr('tabindex')
-					.unbind('keydown.jsp');
+					.unbind('keydown.jsp')
+					.unbind('focus.jspPreventFocus')
+					.bind('mousedown.jspPreventFocus');
 			}
 
 			function observeHash()
